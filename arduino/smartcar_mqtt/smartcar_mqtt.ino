@@ -1,5 +1,8 @@
 #include <Smartcar.h>
 #include <MQTT.h>
+#ifdef __SMCE__
+#include <OV767X.h>
+#endif
 #include <WiFi.h>
 
 #ifndef __SMCE__
@@ -20,14 +23,17 @@ const auto echoPin = 7;
 const auto maxDistance = 400;
 SR04 front(arduinoRuntime, triggerPin, echoPin, maxDistance);
 
+std::vector<char> frameBuffer;
 
 void setup() {
   Serial.begin(9600);
-#ifndef __SMCE__
-  mqtt.begin(net);
-#else
+#ifdef __SMCE__
+  Camera.begin(QVGA, RGB888, 15);
+  frameBuffer.resize(Camera.width() * Camera.height() * Camera.bytesPerPixel());
   mqtt.begin("aerostun.dev", 1883, WiFi);
-  // mqtt.begin(WiFi); // Will connect to localhost
+//mqtt.begin(WiFi); // Will connect to localhost
+#else
+  mqtt.begin(net);
 #endif
   if (mqtt.connect("arduino", "public", "public")) {
     mqtt.subscribe("/smartcar/control/#", 1);
@@ -44,9 +50,19 @@ void setup() {
 }
 
 void loop() {
+  static unsigned long previousFrame = 0;
   if (mqtt.connected()) {
     mqtt.loop();
+#ifdef __SMCE__
+    const auto currentTime = millis();
+    if(currentTime - previousFrame >= 65) {
+      previousFrame = currentTime;
+      Camera.readFrame(frameBuffer.data());
+      mqtt.publish("/smartcar/camera", frameBuffer.data(), frameBuffer.size(), false, 0);
+    }
+#endif
   }
+
   static unsigned long previousTransmission = 0;
   const auto currentTime = millis();
   if (currentTime - previousTransmission >= oneSecond) {
@@ -54,4 +70,5 @@ void loop() {
     const auto distance = String(front.getDistance());
     mqtt.publish("/smartcar/ultrasound/front", distance);
   }
+  delay(50);
 }

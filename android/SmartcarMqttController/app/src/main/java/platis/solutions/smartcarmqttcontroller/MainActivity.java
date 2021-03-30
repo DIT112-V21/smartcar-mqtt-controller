@@ -2,9 +2,12 @@ package platis.solutions.smartcarmqttcontroller;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -25,15 +28,19 @@ public class MainActivity extends AppCompatActivity {
     private static final int STRAIGHT_ANGLE = 0;
     private static final int STEERING_ANGLE = 50;
     private static final int QOS = 1;
+    private static final int IMAGE_WIDTH = 320;
+    private static final int IMAGE_HEIGHT = 240;
 
     private MqttClient mMqttClient;
     private boolean isConnected = false;
+    private ImageView mCameraView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mMqttClient = new MqttClient(getApplicationContext(), MQTT_SERVER, TAG);
+        mCameraView = findViewById(R.id.imageView);
 
         connectToMqttBroker();
     }
@@ -73,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), successfulConnection, Toast.LENGTH_SHORT).show();
 
                     mMqttClient.subscribe("/smartcar/ultrasound/front", QOS, null);
+                    mMqttClient.subscribe("/smartcar/camera", QOS, null);
                 }
 
                 @Override
@@ -93,6 +101,22 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void messageArrived(String topic, MqttMessage message) throws Exception {
+                    if (topic.equals("/smartcar/camera")) {
+                        final Bitmap bm = Bitmap.createBitmap(IMAGE_WIDTH, IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
+
+                        final byte[] payload = message.getPayload();
+                        final int[] colors = new int[IMAGE_WIDTH * IMAGE_HEIGHT];
+                        for (int ci = 0; ci < colors.length; ++ci) {
+                            final byte r = payload[3 * ci];
+                            final byte g = payload[3 * ci + 1];
+                            final byte b = payload[3 * ci + 2];
+                            colors[ci] = Color.rgb(r, g, b);
+                        }
+                        bm.setPixels(colors, 0, IMAGE_WIDTH, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+
+                        mCameraView.setImageBitmap(bm);
+                        return;
+                    }
                     Log.i(TAG, "[MQTT] Topic: " + topic + " | Message: " + message.toString());
                 }
 
