@@ -1,3 +1,4 @@
+#include <vector>
 #include <Smartcar.h>
 #include <MQTT.h>
 #ifdef __SMCE__
