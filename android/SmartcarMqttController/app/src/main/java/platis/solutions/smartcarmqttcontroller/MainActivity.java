@@ -115,9 +115,8 @@ public class MainActivity extends AppCompatActivity {
                         bm.setPixels(colors, 0, IMAGE_WIDTH, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
 
                         mCameraView.setImageBitmap(bm);
-                        return;
-                    }
-                    Log.i(TAG, "[MQTT] Topic: " + topic + " | Message: " + message.toString());
+                    } else {
+                        Log.i(TAG, "[MQTT] Topic: " + topic + " | Message: " + message.toString());
                 }
 
                 @Override
