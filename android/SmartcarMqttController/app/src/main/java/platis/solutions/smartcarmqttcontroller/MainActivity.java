@@ -117,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
                         mCameraView.setImageBitmap(bm);
                     } else {
                         Log.i(TAG, "[MQTT] Topic: " + topic + " | Message: " + message.toString());
+                    }
                 }
 
                 @Override
