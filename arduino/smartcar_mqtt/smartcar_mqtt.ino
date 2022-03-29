@@ -8,10 +8,11 @@
 
 #include <Smartcar.h>
 
-#ifndef __SMCE__
-WiFiClient net;
-#endif
 MQTTClient mqtt;
+WiFiClient net;
+
+const char ssid[] = "***";
+const char pass[] = "****";
 
 ArduinoRuntime arduinoRuntime;
 BrushedMotor leftMotor(arduinoRuntime, smartcarlib::pins::v2::leftMotorPins);
@@ -21,8 +22,13 @@ DifferentialControl control(leftMotor, rightMotor);
 SimpleCar car(control);
 
 const auto oneSecond = 1000UL;
+#ifdef __SMCE__
 const auto triggerPin = 6;
 const auto echoPin = 7;
+#else
+const auto triggerPin = 33;
+const auto echoPin = 32;
+#endif
 const auto maxDistance = 400;
 SR04 front(arduinoRuntime, triggerPin, echoPin, maxDistance);
 
@@ -33,23 +39,37 @@ void setup() {
 #ifdef __SMCE__
   Camera.begin(QVGA, RGB888, 15);
   frameBuffer.resize(Camera.width() * Camera.height() * Camera.bytesPerPixel());
-  mqtt.begin("aerostun.dev", 1883, WiFi);
-  // mqtt.begin(WiFi); // Will connect to localhost
-#else
-  mqtt.begin(net);
 #endif
-  if (mqtt.connect("arduino", "public", "public")) {
-    mqtt.subscribe("/smartcar/control/#", 1);
-    mqtt.onMessage([](String topic, String message) {
-      if (topic == "/smartcar/control/throttle") {
-        car.setSpeed(message.toInt());
-      } else if (topic == "/smartcar/control/steering") {
-        car.setAngle(message.toInt());
-      } else {
-        Serial.println(topic + " " + message);
-      }
-    });
+
+  WiFi.begin(ssid, pass);
+  mqtt.begin("127.0.0.1", 1883, net);
+
+  Serial.println("Connecting to WiFi...");
+  auto wifiStatus = WiFi.status();
+  while (wifiStatus != WL_CONNECTED && wifiStatus != WL_NO_SHIELD) {
+    Serial.println(wifiStatus);
+    Serial.print(".");
+    delay(1000);
+    wifiStatus = WiFi.status();
   }
+
+
+  Serial.println("Connecting to MQTT broker");
+  while (!mqtt.connect("arduino", "public", "public")) {
+    Serial.print(".");
+    delay(1000);
+  }
+
+  mqtt.subscribe("/smartcar/control/#", 1);
+  mqtt.onMessage([](String topic, String message) {
+    if (topic == "/smartcar/control/throttle") {
+      car.setSpeed(message.toInt());
+    } else if (topic == "/smartcar/control/steering") {
+      car.setAngle(message.toInt());
+    } else {
+      Serial.println(topic + " " + message);
+    }
+  });
 }
 
 void loop() {
@@ -74,6 +94,6 @@ void loop() {
   }
 #ifdef __SMCE__
   // Avoid over-using the CPU if we are running in the emulator
-  delay(35);
+  delay(1);
 #endif
 }
