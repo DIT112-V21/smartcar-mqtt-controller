@@ -25,9 +25,11 @@ const auto oneSecond = 1000UL;
 #ifdef __SMCE__
 const auto triggerPin = 6;
 const auto echoPin = 7;
+const auto mqttBrokerUrl = "127.0.0.1";
 #else
 const auto triggerPin = 33;
 const auto echoPin = 32;
+const auto mqttBrokerUrl = "192.168.0.40";
 #endif
 const auto maxDistance = 400;
 SR04 front(arduinoRuntime, triggerPin, echoPin, maxDistance);
@@ -42,7 +44,7 @@ void setup() {
 #endif
 
   WiFi.begin(ssid, pass);
-  mqtt.begin("127.0.0.1", 1883, net);
+  mqtt.begin(mqttBrokerUrl, 1883, net);
 
   Serial.println("Connecting to WiFi...");
   auto wifiStatus = WiFi.status();
