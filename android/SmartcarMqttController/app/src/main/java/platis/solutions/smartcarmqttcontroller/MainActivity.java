@@ -20,7 +20,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "SmartcarMqttController";
     private static final String EXTERNAL_MQTT_BROKER = "aerostun.dev";
     private static final String LOCALHOST = "10.0.2.2";
-    private static final String MQTT_SERVER = "tcp://" + EXTERNAL_MQTT_BROKER + ":1883";
+    private static final String MQTT_SERVER = "tcp://" + LOCALHOST + ":1883";
     private static final String THROTTLE_CONTROL = "/smartcar/control/throttle";
     private static final String STEERING_CONTROL = "/smartcar/control/steering";
     private static final int MOVEMENT_SPEED = 70;
@@ -113,7 +113,6 @@ public class MainActivity extends AppCompatActivity {
                             colors[ci] = Color.rgb(r, g, b);
                         }
                         bm.setPixels(colors, 0, IMAGE_WIDTH, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
-
                         mCameraView.setImageBitmap(bm);
                     } else {
                         Log.i(TAG, "[MQTT] Topic: " + topic + " | Message: " + message.toString());
