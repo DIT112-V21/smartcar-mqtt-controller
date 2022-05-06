@@ -107,9 +107,9 @@ public class MainActivity extends AppCompatActivity {
                         final byte[] payload = message.getPayload();
                         final int[] colors = new int[IMAGE_WIDTH * IMAGE_HEIGHT];
                         for (int ci = 0; ci < colors.length; ++ci) {
-                            final byte r = payload[3 * ci];
-                            final byte g = payload[3 * ci + 1];
-                            final byte b = payload[3 * ci + 2];
+                            final int r = payload[3 * ci] & 0xFF;
+                            final int g = payload[3 * ci + 1] & 0xFF;
+                            final int b = payload[3 * ci + 2] & 0xFF;
                             colors[ci] = Color.rgb(r, g, b);
                         }
                         bm.setPixels(colors, 0, IMAGE_WIDTH, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
